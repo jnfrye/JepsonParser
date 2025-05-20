@@ -1,16 +1,18 @@
+from src.feature_matcher import FeatureExtractor
+from src.feature_node import FeatureNode
 import re
 from typing import List, Optional, Dict
 
-class DescriptionNode:
+class FeatureNode:
     def __init__(self, name: str, value: Optional[str] = None):
         self.name = name
         self.value = value
-        self.children: List['DescriptionNode'] = []
+        self.children: List['FeatureNode'] = []
 
-    def add_child(self, child: 'DescriptionNode'):
+    def add_child(self, child: 'FeatureNode'):
         self.children.append(child)
 
-    def find(self, name: str) -> List['DescriptionNode']:
+    def find(self, name: str) -> List['FeatureNode']:
         """Recursively find all nodes with the given name."""
         result = []
         if self.name.lower() == name.lower():
@@ -27,12 +29,12 @@ class DescriptionNode:
         }
 
     def __repr__(self):
-        return f"DescriptionNode(name={self.name!r}, value={self.value!r}, children={self.children!r})"
+        return f"FeatureNode(name={self.name!r}, value={self.value!r}, children={self.children!r})"
 
 def _clean_value(val):
     return val.rstrip('.').strip()
 
-class FeatureMatcher:
+class FeatureExtractor:
     def __init__(self, name: str, pattern, children=None, split=None, consume_pattern=False):
         self.name = name
         if isinstance(pattern, str):
@@ -50,9 +52,9 @@ class FeatureMatcher:
     def extract(self, text):
         """
         Recursively extract features from text using this matcher and its children.
-        Returns a DescriptionNode or None if not matched.
+        Returns a FeatureNode or None if not matched.
         """
-        node = DescriptionNode(self.name)
+        node = FeatureNode(self.name)
         if self.children:
             if self.split:
                 parts = [p.strip() for p in re.split(self.split, text) if p.strip()]
@@ -76,50 +78,50 @@ class FeatureMatcher:
                 
                 if not matched and self.children:
                     # If no child matched, just add as a generic feature
-                    node.add_child(DescriptionNode('Unmatched', part))
+                    node.add_child(FeatureNode('Unmatched', part))
         else:
             node.value = _clean_value(text)
         
         return node
 
 def get_jepson_feature_hierarchy():
-    return FeatureMatcher(
+    return FeatureExtractor(
         'TaxonDescription', r'.*', [
-        FeatureMatcher(
+        FeatureExtractor(
             'Habit', r'^Habit:', [
-                FeatureMatcher('General', r'.+', [
-                    FeatureMatcher('Height', r'\d+--\d+ ?[a-zA-Z]+'),
-                    FeatureMatcher('Growth Form', r'shrub|thicket-forming')
+                FeatureExtractor('General', r'.+', [
+                    FeatureExtractor('Height', r'\d+--\d+ ?[a-zA-Z]+'),
+                    FeatureExtractor('Growth Form', r'shrub|thicket-forming')
                 ], split=r','),
             ], split=r';', consume_pattern=True),
-        FeatureMatcher(
+        FeatureExtractor(
             'Stem', r'^Stem:', [
-                FeatureMatcher('Prickle', r'prickles', [
-                    FeatureMatcher('Count', r'few|many'),
-                    FeatureMatcher('Grouping', r'paired'),
-                    FeatureMatcher('Length', r'\d+--\d+ ?mm'),
-                    FeatureMatcher('Shape', r'thick-based|compressed'),
-                    FeatureMatcher('Curvature', r'curved|straight'),
+                FeatureExtractor('Prickle', r'prickles', [
+                    FeatureExtractor('Count', r'few|many'),
+                    FeatureExtractor('Grouping', r'paired'),
+                    FeatureExtractor('Length', r'\d+--\d+ ?mm'),
+                    FeatureExtractor('Shape', r'thick-based|compressed'),
+                    FeatureExtractor('Curvature', r'curved|straight'),
                 ], split=r',', consume_pattern=True)
             ], split=r';', consume_pattern=True),
-        FeatureMatcher(
+        FeatureExtractor(
             'Leaf', r'^Leaf:', [
-                FeatureMatcher('Axis', r'^axis', [
-                    FeatureMatcher('Trichome', r'shaggy-hairy|glabrous', [
-                        FeatureMatcher('Form', r'shaggy-hairy|glabrous'),
-                        FeatureMatcher('Length', r'hairs? to ([^,;]+)'),
-                        FeatureMatcher('Glandularity', r'glandless|glandular')
+                FeatureExtractor('Axis', r'^axis', [
+                    FeatureExtractor('Trichome', r'shaggy-hairy|glabrous', [
+                        FeatureExtractor('Form', r'shaggy-hairy|glabrous'),
+                        FeatureExtractor('Length', r'hairs? to ([^,;]+)'),
+                        FeatureExtractor('Glandularity', r'glandless|glandular')
                     ])
                 ], split=r',', consume_pattern=True)
             ], split=r';', consume_pattern=True)
         ], split=r'\.\s|; (?=Elevation)')
 
-def parse_jepson_description(description: str) -> DescriptionNode:
+def parse_jepson_description(description: str) -> FeatureNode:
     """
-    Fully data-driven parser for Jepson eFlora taxon descriptions using FeatureMatcher hierarchy.
-    The top-level FeatureMatcher is responsible for splitting into sections and delegating extraction.
+    Fully data-driven parser for Jepson eFlora taxon descriptions using FeatureExtractor hierarchy.
+    The top-level FeatureExtractor is responsible for splitting into sections and delegating extraction.
     """
-    # Create a root FeatureMatcher that matches all top-level sections (Habit, Stem, Leaf, etc.)
+    # Create a root FeatureExtractor that matches all top-level sections (Habit, Stem, Leaf, etc.)
     feature_matcher_tree = get_jepson_feature_hierarchy()
     return feature_matcher_tree.extract(description)
 
