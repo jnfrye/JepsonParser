@@ -3,56 +3,14 @@ from src.feature_node import FeatureNode
 import re
 from typing import List, Optional, Dict
 
-
-def get_habit_feature_hierarchy():
-    return FeatureExtractor(
-        'Habit', r'Habit:\s*(.+)', [
-            FeatureExtractor('General', None, [
-                FeatureExtractor('Height', r'(\d+--\d+ ?[a-zA-Z]+)'),
-                FeatureExtractor('Growth Form', r'((?:shrub|thicket-forming)(?:\sor\sthicket-forming)?)')
-            ])
-        ])
-
-def get_stem_feature_hierarchy():
-    return FeatureExtractor(
-        'Stem', r'Stem:\s*(.+)', [
-            FeatureExtractor('Prickle', r'prickles\s*([^\.]+)', [
-                FeatureExtractor('Count', r'(few[- ]to[- ]many|few|many)'),
-                FeatureExtractor('Grouping', r'(paired[- ]or[- ]not|paired)'),
-                FeatureExtractor('Length', r'(\d+--\d+ ?mm)'),
-                FeatureExtractor('Shape', r'(thick-based[- ]and[- ]compressed|thick-based|compressed)'),
-                FeatureExtractor('Curvature', r'(generally[- ]curved[- ]\(straight\)|curved|straight)'),
-            ])
-        ])
-
-def get_leaf_feature_hierarchy():
-    return FeatureExtractor(
-        'Leaf', r'Leaf:\s*(.+)', [
-            FeatureExtractor('Axis', r'axis\s*([^;]*)', [
-                FeatureExtractor('Trichome', None, [
-                    FeatureExtractor('Form', r'(shaggy-hairy|glabrous)'),
-                    FeatureExtractor('Length', r'hairs to ([^,;]+)'),
-                    FeatureExtractor('Glandularity', r'(glandless|glandular)')
-                ])
-            ])
-        ])
-
-def get_jepson_feature_hierarchy():
-    return FeatureExtractor(
-        'TaxonDescription', None, [
-            get_habit_feature_hierarchy(),
-            get_stem_feature_hierarchy(),
-            get_leaf_feature_hierarchy()
-        ])
+from src.feature_schema import get_habit_feature_schema, get_stem_feature_schema, get_leaf_feature_schema, get_jepson_feature_schema
 
 def parse_jepson_description(description: str) -> FeatureNode:
     """
-    Fully data-driven parser for Jepson eFlora taxon descriptions using FeatureExtractor hierarchy.
-    The top-level FeatureExtractor is responsible for splitting into sections and delegating extraction.
+    Parses a Jepson-style taxon description into a FeatureNode tree.
     """
-    # Create a root FeatureExtractor that matches all top-level sections (Habit, Stem, Leaf, etc.)
-    feature_matcher_tree = get_jepson_feature_hierarchy()
-    return feature_matcher_tree.extract(description)
+    schema = get_jepson_feature_schema()
+    return schema.extract(description)
 
 # Example usage (for testing)
 if __name__ == "__main__":
