@@ -4,37 +4,46 @@ import re
 from typing import List, Optional, Dict
 
 
+def get_habit_feature_hierarchy():
+    return FeatureExtractor(
+        'Habit', r'Habit:\s*(.+)', [
+            FeatureExtractor('General', None, [
+                FeatureExtractor('Height', r'(\d+--\d+ ?[a-zA-Z]+)'),
+                FeatureExtractor('Growth Form', r'((?:shrub|thicket-forming)(?:\sor\sthicket-forming)?)')
+            ])
+        ])
+
+def get_stem_feature_hierarchy():
+    return FeatureExtractor(
+        'Stem', r'Stem:\s*(.+)', [
+            FeatureExtractor('Prickle', r'prickles\s*([^\.]+)', [
+                FeatureExtractor('Count', r'(few[- ]to[- ]many|few|many)'),
+                FeatureExtractor('Grouping', r'(paired[- ]or[- ]not|paired)'),
+                FeatureExtractor('Length', r'(\d+--\d+ ?mm)'),
+                FeatureExtractor('Shape', r'(thick-based[- ]and[- ]compressed|thick-based|compressed)'),
+                FeatureExtractor('Curvature', r'(generally[- ]curved[- ]\(straight\)|curved|straight)'),
+            ])
+        ])
+
+def get_leaf_feature_hierarchy():
+    return FeatureExtractor(
+        'Leaf', r'Leaf:\s*(.+)', [
+            FeatureExtractor('Axis', r'axis\s*([^;]*)', [
+                FeatureExtractor('Trichome', None, [
+                    FeatureExtractor('Form', r'(shaggy-hairy|glabrous)'),
+                    FeatureExtractor('Length', r'hairs to ([^,;]+)'),
+                    FeatureExtractor('Glandularity', r'(glandless|glandular)')
+                ])
+            ])
+        ])
+
 def get_jepson_feature_hierarchy():
     return FeatureExtractor(
-        'TaxonDescription', r'.*', [
-        FeatureExtractor(
-            'Habit', r'^Habit:', [
-                FeatureExtractor('General', r'.+', [
-                    FeatureExtractor('Height', r'\d+--\d+ ?[a-zA-Z]+'),
-                    FeatureExtractor('Growth Form', r'shrub|thicket-forming')
-                ], split=r','),
-            ], split=r';', consume_pattern=True),
-        FeatureExtractor(
-            'Stem', r'^Stem:', [
-                FeatureExtractor('Prickle', r'prickles', [
-                    FeatureExtractor('Count', r'few|many'),
-                    FeatureExtractor('Grouping', r'paired'),
-                    FeatureExtractor('Length', r'\d+--\d+ ?mm'),
-                    FeatureExtractor('Shape', r'thick-based|compressed'),
-                    FeatureExtractor('Curvature', r'curved|straight'),
-                ], split=r',', consume_pattern=True)
-            ], split=r';', consume_pattern=True),
-        FeatureExtractor(
-            'Leaf', r'^Leaf:', [
-                FeatureExtractor('Axis', r'^axis', [
-                    FeatureExtractor('Trichome', r'shaggy-hairy|glabrous', [
-                        FeatureExtractor('Form', r'shaggy-hairy|glabrous'),
-                        FeatureExtractor('Length', r'hairs? to ([^,;]+)'),
-                        FeatureExtractor('Glandularity', r'glandless|glandular')
-                    ])
-                ], split=r',', consume_pattern=True)
-            ], split=r';', consume_pattern=True)
-        ], split=r'\.\s|; (?=Elevation)')
+        'TaxonDescription', None, [
+            get_habit_feature_hierarchy(),
+            get_stem_feature_hierarchy(),
+            get_leaf_feature_hierarchy()
+        ])
 
 def parse_jepson_description(description: str) -> FeatureNode:
     """
