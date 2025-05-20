@@ -1,4 +1,4 @@
-from src.feature_matcher import FeatureExtractor
+from src.feature_extractor import FeatureExtractor
 
 
 def test_feature_extractor_basic():

@@ -1,5 +1,5 @@
 from src.jepson_parser import parse_jepson_description
-from src.feature_matcher import FeatureExtractor
+from src.feature_extractor import FeatureExtractor
 from src.feature_node import FeatureNode
 
 def test_parse_jepson_description_tree():

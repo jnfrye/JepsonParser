@@ -1,4 +1,4 @@
-from src.feature_matcher import FeatureExtractor
+from src.feature_extractor import FeatureExtractor
 from src.feature_node import FeatureNode
 import re
 from typing import List, Optional, Dict
