@@ -1,0 +1,17 @@
+# Ignore everything by default
+/*
+
+# But do not ignore these files:
+!*.py
+!*.md
+!requirements.txt
+!/.gitignore
+
+# Do not ignore directories, so .py files in subfolders are tracked
+!*/
+
+# Ignore common development and Python environment folders
+.vscode/
+venv/
+__pycache__/
+**/__pycache__/
