@@ -26,8 +26,10 @@ def test_parse_jepson_description_tree():
     assert len(height_node.values) == 2
     assert height_node.values[0].raw_value == '8'
     assert height_node.values[0].is_range_start is True
-    assert height_node.values[1].raw_value == '25 dm'
+    assert height_node.values[0].unit == 'dm'
+    assert height_node.values[1].raw_value == '25'
     assert height_node.values[1].is_range_start is False
+    assert height_node.values[1].unit == 'dm'
 
     # Check detailed Stem section
     stem = next(child for child in tree.children if child.name == 'Stem')
@@ -40,18 +42,22 @@ def test_parse_jepson_description_tree():
     grouping_node = next((c for c in prickle.children if c.name == 'Grouping'), None)
     assert grouping_node is not None
     assert grouping_node.values[0].raw_value == 'paired'
+    assert grouping_node.values[0].unit is None
     # Length: 3--15 mm
     length_node = next((c for c in prickle.children if c.name == 'Length'), None)
     assert length_node is not None
     assert len(length_node.values) == 2
     assert length_node.values[0].raw_value == '3'
     assert length_node.values[0].is_range_start is True
-    assert length_node.values[1].raw_value == '15 mm'
+    assert length_node.values[0].unit == 'mm'
+    assert length_node.values[1].raw_value == '15'
     assert length_node.values[1].is_range_start is False
+    assert length_node.values[1].unit == 'mm'
     # Shape
     shape_node = next((c for c in prickle.children if c.name == 'Shape'), None)
     assert shape_node is not None
     assert shape_node.values[0].raw_value == 'thick-based and compressed'
+    assert shape_node.values[0].unit is None
     # Curvature
     curvature_node = next((c for c in prickle.children if c.name == 'Curvature'), None)
     assert curvature_node is not None

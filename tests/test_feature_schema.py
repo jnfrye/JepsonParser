@@ -17,16 +17,21 @@ def test_habit_feature_schema():
     assert len(growth_form_node.values) == 2
     assert growth_form_node.values[0].raw_value == 'shrub'
     assert growth_form_node.values[0].is_range_start is False
+    assert growth_form_node.values[0].unit is None
     assert growth_form_node.values[1].raw_value == 'thicket-forming'
     assert growth_form_node.values[1].is_range_start is False
+    assert growth_form_node.values[1].unit is None
 
     height_node = next((c for c in general.children if c.name == 'Height'), None)
     assert height_node is not None
     assert len(height_node.values) == 2
     assert height_node.values[0].raw_value == '8'
     assert height_node.values[0].is_range_start is True
-    assert height_node.values[1].raw_value == '25 dm'
+    assert height_node.values[0].unit == 'dm'
+    assert height_node.values[1].raw_value == '25'
     assert height_node.values[1].is_range_start is False
+    assert height_node.values[1].unit == 'dm'
+
 
 def test_stem_feature_schema():
     extractor = get_stem_feature_schema()
@@ -44,8 +49,10 @@ def test_stem_feature_schema():
     assert len(length_node.values) == 2
     assert length_node.values[0].raw_value == '3'
     assert length_node.values[0].is_range_start is True
-    assert length_node.values[1].raw_value == '15 mm'
+    assert length_node.values[0].unit == 'mm'
+    assert length_node.values[1].raw_value == '15'
     assert length_node.values[1].is_range_start is False
+    assert length_node.values[1].unit == 'mm'
 
     assert any(c.name == 'Shape' and 'thick-based' in c.value for c in prickle.children)
     assert any(c.name == 'Curvature' and 'curved' in c.value for c in prickle.children)
@@ -61,5 +68,7 @@ def test_leaf_feature_schema():
     assert trichome is not None
     # Should find Form, Length, Glandularity
     assert any(c.name == 'Form' and ('shaggy-hairy' in c.value or 'glabrous' in c.value) for c in trichome.children)
-    assert any(c.name == 'Length' and '1 mm' in c.value for c in trichome.children)
+    assert any(
+        c.name == 'Length' and c.values and c.values[0].raw_value == '1' and c.values[0].unit == 'mm'
+        for c in trichome.children)
     assert any(c.name == 'Glandularity' and ('glandless' in c.value or 'glandular' in c.value) for c in trichome.children)
