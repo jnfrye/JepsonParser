@@ -40,23 +40,27 @@ class FeatureExtractor:
 
     def extract(self, text):
         logger.debug(f"Entering extract: name={self.name}, pattern={getattr(self.pattern, 'pattern', None)}, text={repr(text)}")
-        # LEAF NODE
         if not self.children:
-            if self.pattern is not None:
-                m = self.pattern.search(text)
-                logger.debug(f"Leaf node {self.name}: pattern match={bool(m)}")
-                if m and m.lastindex and m.group(1).strip():
-                    value = m.group(1).strip()
-                    logger.debug(f"Leaf node {self.name}: captured group value={repr(value)}")
-                    return FeatureNode(self.name, _clean_value(value))
-                else:
-                    logger.debug(f"Leaf node {self.name}: no match or empty group, skipping node")
-                    return None
-            else:
-                logger.debug(f"Leaf node {self.name}: no pattern, skipping node")
-                return None
+            return self._extract_leaf_node(text)
+        else:
+            return self._extract_internal_node(text)
 
-        # INTERNAL NODE
+    def _extract_leaf_node(self, text):
+        if self.pattern is not None:
+            m = self.pattern.search(text)
+            logger.debug(f"Leaf node {self.name}: pattern match={bool(m)}")
+            if m and m.lastindex and m.group(1).strip():
+                value = m.group(1).strip()
+                logger.debug(f"Leaf node {self.name}: captured group value={repr(value)}")
+                return FeatureNode(self.name, _clean_value(value))
+            else:
+                logger.debug(f"Leaf node {self.name}: no match or empty group, skipping node")
+                return None
+        else:
+            logger.debug(f"Leaf node {self.name}: no pattern, skipping node")
+            return None
+
+    def _extract_internal_node(self, text):
         # Get match ranges for all children
         child_infos = []
         for child in self.children:
