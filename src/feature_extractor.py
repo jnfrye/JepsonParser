@@ -1,7 +1,8 @@
 import re
 import logging
 from src.feature_node import FeatureNode
-from src.feature_value import FeatureValue
+from src.feature_value import FeatureValue, split_feature_values
+from typing import List
 
 # Configure logging in the test or main
 logger = logging.getLogger(__name__)
@@ -54,25 +55,7 @@ class FeatureExtractor:
                 raw_value = m.group(1).strip()
                 logger.debug(f"Leaf node {self.name}: captured group value={repr(raw_value)}")
 
-                # Split on range and value delimiters
-                # e.g. '8--25 dm', 'shrub or thicket-forming', 'red, green'
-                # For now, only basic splitting; qualifiers handled later
-                values = []
-                delimiters = [('--', True), (' to ', True), (' or ', False), (',', False)]
-                splits = [(d, is_range) for d, is_range in delimiters if d in raw_value]
-                if splits:
-                    # Use the first matching delimiter
-                    delim, is_range = splits[0]
-                    parts = [p.strip() for p in raw_value.split(delim)]
-                    for i, part in enumerate(parts):
-                        values.append(FeatureValue(
-                            raw_value=part,
-                            qualifier=None,
-                            is_range_start=(is_range and i == 0)
-                        ))
-                else:
-                    values.append(FeatureValue(raw_value=raw_value, qualifier=None, is_range_start=False))
-
+                values = split_feature_values(raw_value)
                 return FeatureNode(self.name, values=values)
             else:
                 logger.debug(f"Leaf node {self.name}: no match or empty group, skipping node")
