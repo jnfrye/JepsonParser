@@ -12,8 +12,21 @@ def test_habit_feature_schema():
     general = next((c for c in node.children if c.name == 'General'), None)
     assert general is not None
     # Should find both Growth Form and Height
-    assert any(c.name == 'Growth Form' and 'shrub or thicket-forming' in c.value for c in general.children)
-    assert any(c.name == 'Height' and '8--25 dm' in c.value for c in general.children)
+    growth_form_node = next((c for c in general.children if c.name == 'Growth Form'), None)
+    assert growth_form_node is not None
+    assert len(growth_form_node.values) == 2
+    assert growth_form_node.values[0].raw_value == 'shrub'
+    assert growth_form_node.values[0].is_range_start is False
+    assert growth_form_node.values[1].raw_value == 'thicket-forming'
+    assert growth_form_node.values[1].is_range_start is False
+
+    height_node = next((c for c in general.children if c.name == 'Height'), None)
+    assert height_node is not None
+    assert len(height_node.values) == 2
+    assert height_node.values[0].raw_value == '8'
+    assert height_node.values[0].is_range_start is True
+    assert height_node.values[1].raw_value == '25 dm'
+    assert height_node.values[1].is_range_start is False
 
 def test_stem_feature_schema():
     extractor = get_stem_feature_schema()
@@ -25,7 +38,15 @@ def test_stem_feature_schema():
     # Should find Count, Grouping, Length, Shape, Curvature
     assert any(c.name == 'Count' and 'few' in c.value for c in prickle.children)
     assert any(c.name == 'Grouping' and 'paired' in c.value for c in prickle.children)
-    assert any(c.name == 'Length' and '3--15 mm' in c.value for c in prickle.children)
+
+    length_node = next((c for c in prickle.children if c.name == 'Length'), None)
+    assert length_node is not None
+    assert len(length_node.values) == 2
+    assert length_node.values[0].raw_value == '3'
+    assert length_node.values[0].is_range_start is True
+    assert length_node.values[1].raw_value == '15 mm'
+    assert length_node.values[1].is_range_start is False
+
     assert any(c.name == 'Shape' and 'thick-based' in c.value for c in prickle.children)
     assert any(c.name == 'Curvature' and 'curved' in c.value for c in prickle.children)
 
