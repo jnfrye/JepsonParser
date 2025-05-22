@@ -12,6 +12,8 @@
 
 # Ignore common development and Python environment folders
 .vscode/
+.windsurf/
+.pytest_cache/
 venv/
 __pycache__/
 **/__pycache__/
