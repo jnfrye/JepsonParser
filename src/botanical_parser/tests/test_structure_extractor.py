@@ -1,93 +1,11 @@
 """
-Tests for the extractor classes.
+Tests for the StructureExtractor class.
 """
 import pytest
-from botanical_parser.attribute_extractor import AttributeExtractor
 from botanical_parser.structure_extractor import StructureExtractor
+from botanical_parser.attribute_extractor import AttributeExtractor
 from botanical_parser.attribute_node import AttributeNode
 from botanical_parser.attribute_value import AttributeValue
-
-
-def test_attribute_extractor_simple():
-    """Test extracting a simple attribute."""
-    extractor = AttributeExtractor("Color", r"^(green|yellow)$")
-    text = "green"
-    
-    node = extractor.extract(text)
-    
-    assert node is not None
-    assert node.name == "Color"
-    assert len(node.values) == 1
-    assert node.values[0].raw_value == "green"
-
-
-def test_attribute_extractor_no_match():
-    """Test behavior when the pattern doesn't match."""
-    extractor = AttributeExtractor("Color", r"^(green|yellow)$")
-    text = "blue"
-    
-    node = extractor.extract(text)
-    
-    assert node is None
-
-
-def test_attribute_extractor_no_pattern():
-    """Test behavior when no pattern is provided."""
-    extractor = AttributeExtractor("Color")
-    text = "The leaf color green."
-    
-    node = extractor.extract(text)
-    
-    assert node is None
-
-
-def test_attribute_extractor_range():
-    """Test extracting a range attribute."""
-    extractor = AttributeExtractor("Height", r"^(\d+\s*--\s*\d+\s*[a-zA-Z]*)$")
-    text = "5--10 cm"
-    
-    node = extractor.extract(text)
-    
-    assert node is not None
-    assert node.name == "Height"
-    assert len(node.values) == 2
-    
-    # Check range values
-    assert node.values[0].raw_value == "5"
-    assert node.values[0].unit == "cm"
-    assert node.values[0].is_range_start is True
-    
-    assert node.values[1].raw_value == "10"
-    assert node.values[1].unit == "cm"
-    assert node.values[1].is_range_end is True
-
-
-def test_attribute_extractor_or_values():
-    """Test extracting an attribute with OR values."""
-    extractor = AttributeExtractor("Growth Form", r"^([\w\s-]+(?:\s+or\s+[\w\s-]+)+)$")
-    text = "shrub or thicket-forming"
-    
-    node = extractor.extract(text)
-    
-    assert node is not None
-    assert node.name == "Growth Form"
-    assert len(node.values) == 2
-    assert node.values[0].raw_value == "shrub"
-    assert node.values[1].raw_value == "thicket-forming"
-
-
-def test_attribute_extractor_with_unit():
-    """Test extracting an attribute with a unit."""
-    extractor = AttributeExtractor("Size", r"^(\d+\s*[a-zA-Z]+)$")
-    text = "5 mm"
-    
-    node = extractor.extract(text)
-    
-    assert node is not None
-    assert node.name == "Size"
-    assert len(node.values) == 1
-    assert node.values[0].raw_value == "5"
-    assert node.values[0].unit == "mm"
 
 
 def test_structure_extractor_simple():
@@ -96,7 +14,7 @@ def test_structure_extractor_simple():
         name="Leaf",
         pattern=r"Leaf:\s*(.+?)(?=\n|$)",
         attribute_extractors=[
-            AttributeExtractor("Color", r"(green|red|yellow)")
+            AttributeExtractor("Color", r"(green|red|yellow)")  # Matches known color values directly
         ]
     )
     
@@ -118,7 +36,7 @@ def test_structure_extractor_no_match():
         pattern=r"Fruit:\s*(.+?)(?=\n|$)"
     )
     
-    text = "Leaf: green.\nStem: brown."
+    text = "Leaf: The leaf is green.\nStem: The stem is brown."
     
     node = extractor.extract(text)
     
@@ -141,7 +59,7 @@ def test_structure_extractor_with_children():
         child_extractors=[leaflet_extractor]
     )
     
-    text = "Leaf: leaflets 5--7, green.\nStem: brown."
+    text = "Leaf: leaflets 5--7, green.\nStem: brown."  # Jepson-style text
     
     node = leaf_extractor.extract(text)
     
@@ -162,7 +80,9 @@ def test_structure_extractor_root_level():
     leaf_extractor = StructureExtractor(
         name="Leaf",
         pattern=r"Leaf:\s*(.+?)(?=\n\w+:|$)",
-        attribute_extractors=[color_extractor]
+        attribute_extractors=[
+            color_extractor
+        ]
     )
     
     stem_extractor = StructureExtractor(
