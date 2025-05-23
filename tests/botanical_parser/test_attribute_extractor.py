@@ -2,9 +2,9 @@
 Tests for the AttributeExtractor class.
 """
 import pytest
-from botanical_parser.attribute_extractor import AttributeExtractor
-from botanical_parser.attribute_node import AttributeNode
-from botanical_parser.attribute_value import AttributeValue
+from src.botanical_parser.attribute_extractor import AttributeExtractor
+from src.botanical_parser.attribute_node import AttributeNode
+from src.botanical_parser.attribute_value import AttributeValue
 
 
 def test_attribute_extractor_simple():

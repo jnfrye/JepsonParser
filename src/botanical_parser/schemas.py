@@ -3,7 +3,22 @@ Schema definitions for botanical descriptions.
 """
 from .structure_extractor import StructureExtractor
 from .attribute_extractor import AttributeExtractor
+from .regex_utils import generate_attribute_regex, generate_numeric_regex
 
+
+glandularity_extractor = AttributeExtractor("Glandularity", generate_attribute_regex(
+    value_words=["glandless", "glandular", "eglandular"],
+))
+
+shape_extractor = AttributeExtractor("Shape", generate_attribute_regex(
+    qualifiers=["generally", "mostly", "usually"],
+    value_words=["ovoid", "obovoid", "globose", "pyriform", "ellipsoid", "cylindrical"],
+))
+
+erectness_extractor = AttributeExtractor("Erectness", generate_attribute_regex(
+    qualifiers=["generally", "mostly", "usually"],
+    value_words=["erect", "spreading", "reflexed", "appressed", "ascending"],
+))
 
 def get_habit_schema() -> StructureExtractor:
     """
@@ -16,8 +31,15 @@ def get_habit_schema() -> StructureExtractor:
         name="Habit",
         pattern=r"Habit:\s*(.+?)(?=\n\w+:|$)",
         attribute_extractors=[
-            AttributeExtractor("Height", r"(\d+--\d+\s*[a-z]+)"),
-            AttributeExtractor("Growth Form", r"((?:shrub|thicket-forming|tree|herb|annual|perennial)(?:\s+or\s+(?:shrub|thicket-forming|tree|herb|annual|perennial))*)"),
+            AttributeExtractor("Height", generate_numeric_regex(
+                units=["m", "cm", "dm", "mm", "ft"]
+            )),
+            
+            AttributeExtractor("Growth Form", generate_attribute_regex(
+                value_words=["shrub", "thicket-forming", "tree", "herb", "annual", "perennial", "vine", "subshrub"],
+            )),
+
+            erectness_extractor,
         ]
     )
 
@@ -38,11 +60,25 @@ def get_stem_schema() -> StructureExtractor:
                 name="Prickle",
                 pattern=r"prickles\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Count", r"(few[- ]to[- ]many|few|many)"),
-                    AttributeExtractor("Grouping", r"(paired[- ]or[- ]not|paired)"),
-                    AttributeExtractor("Length", r"(\d+--\d+\s*mm)"),
-                    AttributeExtractor("Shape", r"(thick-based[- ]and[- ]compressed|thick-based|compressed)"),
-                    AttributeExtractor("Curvature", r"(generally[- ]curved[- ]\(straight\)|curved|straight)"),
+                    AttributeExtractor("Count", generate_attribute_regex(
+                        value_words=["few", "many", "numerous", "sparse", "dense"],
+                    )),
+                    
+                    AttributeExtractor("Grouping", generate_attribute_regex(
+                        value_words=["paired", "clustered", "solitary", "scattered"],
+                    )),
+                    
+                    AttributeExtractor("Length", generate_numeric_regex(
+                        units=["mm", "cm"]
+                    )),
+                    
+                    AttributeExtractor("Shape", generate_attribute_regex(
+                        value_words=["thick-based", "compressed", "flattened", "conical", "cylindrical"],
+                    )),
+                    
+                    AttributeExtractor("Curvature", generate_attribute_regex(
+                        value_words=["curved", "straight", "recurved", "bent"]
+                    )),
                 ]
             )
         ]
@@ -65,28 +101,67 @@ def get_leaf_schema() -> StructureExtractor:
                 name="Axis",
                 pattern=r"axis\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Trichome Form", r"(shaggy-hairy|glabrous)"),
-                    AttributeExtractor("Hair Length", r"hairs\s+to\s+([^,;]+)"),
-                    AttributeExtractor("Glandularity", r"(glandless|glandular)"),
+                    AttributeExtractor("Trichome Form", generate_attribute_regex(
+                        qualifiers=["densely", "sparsely", "moderately", "\\+-"],
+                        value_words=["shaggy-hairy", "hairy", "glabrous", "pubescent", "tomentose", "hirsute", "strigose", "villous"],
+                    )),
+                    
+                    StructureExtractor(
+                        name="Hair",
+                        pattern=r"hairs\s+([^,;]+)",
+                        attribute_extractors=[
+                            AttributeExtractor("Length", r"to\s+([^,;]+)")
+                        ]
+                    ),
+
+                    glandularity_extractor,
                 ]
             ),
             StructureExtractor(
                 name="Leaflet",
                 pattern=r"leaflets\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Count", r"(\d+--\d+(?:\(\d+\))?)"),
-                    AttributeExtractor("Surface", r"(hairy|glabrous|glandular)"),
+                    AttributeExtractor("Count", generate_numeric_regex(
+                        units=[], # No units for count
+                        allow_parenthetical=True
+                    )),
+                    
+                    AttributeExtractor("Surface", generate_attribute_regex(
+                        qualifiers=["densely", "sparsely", "\\+-"],
+                        value_words=["hairy", "glabrous", "glandular", "pubescent", "tomentose", "hirsute"],
+                    )),
                 ]
             ),
             StructureExtractor(
                 name="Terminal Leaflet",
                 pattern=r"terminal\s+leaflet\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Size", r"generally\s+(\d+--\d+\s*mm)"),
-                    AttributeExtractor("Shape", r"(ovate-elliptic)"),
+                    AttributeExtractor("Size", generate_numeric_regex(
+                        prefix_qualifiers=["generally", "mostly", "usually"],
+                        units=["mm", "cm"]
+                    )),
+                    
+                    shape_extractor,
+                    
                     AttributeExtractor("Width Position", r"widest\s+at\s+or\s+(below|above)\s+middle"),
-                    AttributeExtractor("Tip", r"tip\s+(rounded|acute)"),
-                    AttributeExtractor("Margin", r"margins\s+(single-\s*or\s*double-toothed)"),
+                    
+                    StructureExtractor(
+                        name="Tip",
+                        pattern=r"tip\s+(.+?)(?=;|$)",
+                        attribute_extractors=[
+                            shape_extractor,
+                        ]
+                    ),
+
+                    StructureExtractor(
+                        name="Margin",
+                        pattern=r"margin\s+(.+?)(?=;|$)",
+                        attribute_extractors=[
+                            AttributeExtractor("Teeth", generate_attribute_regex(
+                                value_words=["entire", "toothed", "serrate", "crenate", "dentate", "lobed", "single-toothed", "double-toothed"],
+                            )),
+                        ]
+                    ),
                 ]
             )
         ]
@@ -109,32 +184,55 @@ def get_flower_schema() -> StructureExtractor:
                 name="Hypanthium",
                 pattern=r"hypanthium\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Width", r"(\d+(?:\.\d+)?--\d+(?:\.\d+)?\s*mm)\s+wide"),
-                    AttributeExtractor("Surface", r"(glabrous|hairy|sparsely\s+hairy)"),
-                    AttributeExtractor("Glandularity", r"(glandless|glandular)"),
+                    AttributeExtractor("Width", generate_numeric_regex(
+                        allow_decimal=True,
+                        units=["mm", "cm"]
+                    ) + r"\s+wide"),
+                    
+                    AttributeExtractor("Surface", generate_attribute_regex(
+                        qualifiers=["densely", "sparsely", "moderately"],
+                        value_words=["hairy", "glabrous", "pubescent", "tomentose"],
+                    )),
+                    
+                    glandularity_extractor,
                 ]
             ),
             StructureExtractor(
                 name="Sepal",
                 pattern=r"sepals\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Glandularity", r"(glandular\s+or\s+not|glandless|glandular)"),
-                    AttributeExtractor("Margin", r"(entire)"),
+                    glandularity_extractor,
+                    
+                    AttributeExtractor("Margin", f"({generate_attribute_regex(
+                        value_words=["entire", "toothed", "serrate", "ciliate"],                        
+                    )})"),
                 ]
             ),
             StructureExtractor(
                 name="Petal",
                 pattern=r"petals\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Size", r"generally\s+(\d+--\d+\s*mm)"),
-                    AttributeExtractor("Color", r"(pink|white|yellow|purple|red)"),
+                    # Size pattern with qualifier and numeric range
+                    AttributeExtractor("Size", generate_numeric_regex(
+                        prefix_qualifiers=["generally", "mostly", "usually"],
+                        units=["mm", "cm"]
+                    )),
+                    
+                    # Color pattern
+                    AttributeExtractor("Color", f"({generate_attribute_regex(
+                        qualifiers=["generally", "mostly", "usually", "pale", "bright", "dark"],
+                        value_words=["pink", "white", "yellow", "purple", "red", "blue", "green", "orange", "lavender", "cream"],                        
+                    )})"),
                 ]
             ),
             StructureExtractor(
                 name="Pistil",
                 pattern=r"pistils\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Count", r"(\d+--\d+)"),
+                    AttributeExtractor("Count", generate_numeric_regex(
+                        units=[], # No units for count
+                        allow_parenthetical=True
+                    )),
                 ]
             )
         ]
@@ -152,23 +250,35 @@ def get_fruit_schema() -> StructureExtractor:
         name="Fruit",
         pattern=r"Fruit:\s*(.+?)(?=\n\w+:|$)",
         attribute_extractors=[
-            AttributeExtractor("Width", r"generally\s+(\d+--\d+(?:\(\d+\))?\s*mm)\s+wide"),
-            AttributeExtractor("Shape", r"generally\s+\((ob)ovoid\)"),
+            AttributeExtractor("Width", generate_numeric_regex(
+                prefix_qualifiers=["generally", "mostly", "usually"],
+                units=["mm", "cm"],
+                allow_parenthetical=True
+            ) + r"\s+wide"),
+            
+            shape_extractor,
         ],
         child_extractors=[
             StructureExtractor(
                 name="Sepal",
                 pattern=r"sepals\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Position", r"generally\s+(erect)"),
-                    AttributeExtractor("Persistence", r"(persistent)"),
+                    erectness_extractor,
+                    
+                    AttributeExtractor("Persistence", generate_attribute_regex(
+                        value_words=["persistent", "deciduous", "caducous"],                        
+                    )),
                 ]
             ),
             StructureExtractor(
                 name="Achene",
                 pattern=r"achenes\s+(.+?)(?=;|$)",
                 attribute_extractors=[
-                    AttributeExtractor("Size", r"generally\s+(\d+(?:\.\d+)?--\d+(?:\.\d+)?\s*mm)"),
+                    AttributeExtractor("Size", generate_numeric_regex(
+                        prefix_qualifiers=["generally", "mostly", "usually"],
+                        allow_decimal=True,
+                        units=["mm", "cm"]
+                    )),
                 ]
             )
         ]

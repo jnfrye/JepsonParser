@@ -2,8 +2,8 @@
 Tests for the AttributeNode and AttributeValue classes.
 """
 import pytest
-from botanical_parser.attribute_node import AttributeNode
-from botanical_parser.attribute_value import AttributeValue
+from src.botanical_parser.attribute_node import AttributeNode
+from src.botanical_parser.attribute_value import AttributeValue
 
 
 def test_attribute_node_creation():

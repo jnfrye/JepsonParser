@@ -2,10 +2,10 @@
 Tests for the StructureExtractor class.
 """
 import pytest
-from botanical_parser.structure_extractor import StructureExtractor
-from botanical_parser.attribute_extractor import AttributeExtractor
-from botanical_parser.attribute_node import AttributeNode
-from botanical_parser.attribute_value import AttributeValue
+from src.botanical_parser.structure_extractor import StructureExtractor
+from src.botanical_parser.attribute_extractor import AttributeExtractor
+from src.botanical_parser.attribute_node import AttributeNode
+from src.botanical_parser.attribute_value import AttributeValue
 
 
 def test_structure_extractor_simple():
