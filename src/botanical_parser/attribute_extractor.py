@@ -271,6 +271,9 @@ class QualitativeAttributeExtractor(AttributeExtractor):
             List of parsed attribute values.
         """
         values = []
+
+        # Get rid of any trailing periods
+        text = text.strip('.')
         
         # Handle all supported conjunctions
         for conjunction in self.conjunctions:

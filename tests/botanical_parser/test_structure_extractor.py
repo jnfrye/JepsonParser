@@ -3,7 +3,7 @@ Tests for the StructureExtractor class.
 """
 import pytest
 from src.botanical_parser.structure_extractor import StructureExtractor
-from src.botanical_parser.attribute_extractor import AttributeExtractor
+from src.botanical_parser.attribute_extractor import QualitativeAttributeExtractor, NumericAttributeExtractor
 from src.botanical_parser.attribute_node import AttributeNode
 from src.botanical_parser.attribute_value import AttributeValue
 
@@ -14,10 +14,10 @@ def test_structure_extractor_simple():
         name="Leaf",
         pattern=r"Leaf:\s*(.+?)(?=\n|$)",
         attribute_extractors=[
-            AttributeExtractor("Color", r"(green|red|yellow)")  # Matches known color values directly
+            QualitativeAttributeExtractor("Color", value_words=["green", "red", "yellow"])
         ]
     )
-    
+
     text = "Leaf: green.\nStem: brown."
     
     node = extractor.extract(text)
@@ -26,7 +26,7 @@ def test_structure_extractor_simple():
     assert node.name == "Leaf"
     assert len(node.attributes) == 1
     assert node.attributes[0].name == "Color"
-    assert node.attributes[0].values[0].raw_value == "green"
+    assert node.attributes[0].values[0] == AttributeValue("green")
 
 
 def test_structure_extractor_no_match():
@@ -49,7 +49,7 @@ def test_structure_extractor_with_children():
         name="Leaflet",
         pattern=r"leaflets\s+(.+?)(?=;|$)",
         attribute_extractors=[
-            AttributeExtractor("Count", r"(\d+--\d+)")
+            NumericAttributeExtractor("Count", units=[])
         ]
     )
     
@@ -75,14 +75,12 @@ def test_structure_extractor_with_children():
 
 def test_structure_extractor_root_level():
     """Test extracting using a root-level structure extractor."""
-    color_extractor = AttributeExtractor("Color", r"(green|red|yellow|brown)")  # Shared color extractor
+    color_extractor = QualitativeAttributeExtractor("Color", value_words=["green", "red", "yellow", "brown"])
 
     leaf_extractor = StructureExtractor(
         name="Leaf",
         pattern=r"Leaf:\s*(.+?)(?=\n\w+:|$)",
-        attribute_extractors=[
-            color_extractor
-        ]
+        attribute_extractors=[color_extractor]
     )
     
     stem_extractor = StructureExtractor(
@@ -110,14 +108,14 @@ def test_structure_extractor_root_level():
     assert leaf.name == "Leaf"
     assert len(leaf.attributes) == 1
     assert leaf.attributes[0].name == "Color"
-    assert leaf.attributes[0].values[0].raw_value == "green"
+    assert leaf.attributes[0].values[0] == AttributeValue("green")
     
     # Check stem
     stem = node.children[1]
     assert stem.name == "Stem"
     assert len(stem.attributes) == 1
     assert stem.attributes[0].name == "Color"
-    assert stem.attributes[0].values[0].raw_value == "brown"
+    assert stem.attributes[0].values[0] == AttributeValue("brown")
 
 
 def test_overlapping_child_structures():
