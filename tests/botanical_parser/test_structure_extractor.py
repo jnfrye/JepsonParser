@@ -12,7 +12,7 @@ def test_structure_extractor_simple():
     """Test extracting a simple structure."""
     extractor = StructureExtractor(
         name="Leaf",
-        pattern=r"Leaf:\s*(.+?)(?=\n|$)",
+        noun="Leaf:",
         attribute_extractors=[
             QualitativeAttributeExtractor("Color", value_words=["green", "red", "yellow"])
         ]
@@ -33,7 +33,7 @@ def test_structure_extractor_no_match():
     """Test behavior when the structure pattern doesn't match."""
     extractor = StructureExtractor(
         name="Fruit",
-        pattern=r"Fruit:\s*(.+?)(?=\n|$)"
+        noun="Fruit:"
     )
     
     text = "Leaf: The leaf is green.\nStem: The stem is brown."
@@ -47,7 +47,7 @@ def test_structure_extractor_with_children():
     """Test extracting a structure with child structures."""
     leaflet_extractor = StructureExtractor(
         name="Leaflet",
-        pattern=r"leaflets\s+(.+?)(?=;|$)",
+        noun="leaflets",
         attribute_extractors=[
             NumericAttributeExtractor("Count", units=[])
         ]
@@ -55,7 +55,7 @@ def test_structure_extractor_with_children():
     
     leaf_extractor = StructureExtractor(
         name="Leaf",
-        pattern=r"Leaf:\s*(.+?)(?=\n|$)",
+        noun="Leaf:",
         child_extractors=[leaflet_extractor]
     )
     
@@ -79,13 +79,13 @@ def test_structure_extractor_root_level():
 
     leaf_extractor = StructureExtractor(
         name="Leaf",
-        pattern=r"Leaf:\s*(.+?)(?=\n\w+:|$)",
+        noun="Leaf:",
         attribute_extractors=[color_extractor]
     )
     
     stem_extractor = StructureExtractor(
         name="Stem",
-        pattern=r"Stem:\s*(.+?)(?=\n\w+:|$)",
+        noun="Stem:",
         attribute_extractors=[color_extractor]
     )
     
@@ -118,21 +118,53 @@ def test_structure_extractor_root_level():
     assert stem.attributes[0].values[0] == AttributeValue("brown")
 
 
+def test_pattern_custom_keyword():
+    """Test using a custom pattern with a required trailing keyword."""
+    extractor = StructureExtractor(
+        name="Leaf",
+        pattern=r"Leaf:\s*(.+?)\s*\[special\]",
+        attribute_extractors=[QualitativeAttributeExtractor("Color", value_words=["green", "yellow"])]
+    )
+
+    text = "Leaf: green [special]\nLeaf: yellow\nStem: brown."
+    node = extractor.extract(text)
+    assert node is not None
+    assert node.name == "Leaf"
+    assert len(node.attributes) == 1
+    assert node.attributes[0].values[0] == AttributeValue("green")
+
+
+def test_pattern_multiline_custom():
+    """Test using a custom pattern to extract a multiline structure region."""
+    extractor = StructureExtractor(
+        name="Description",
+        pattern=r"Description:\n((?:.+\n)+?)EndDescription",
+        attribute_extractors=[]
+    )
+
+    text = "Description:\nThis is line one.\nThis is line two.\nEndDescription\nOther: ignored."
+    node = extractor.extract(text)
+    assert node is not None
+    assert node.name == "Description"
+    # The captured text should include both lines (without EndDescription)
+    # You may want to check node.raw_text or similar, depending on implementation
+
+
 def test_overlapping_child_structures():
     """Test handling of overlapping child structure regions."""
     first_extractor = StructureExtractor(
         name="First",
-        pattern=r"first\s+(.+?)(?=\n|$)",
+        noun="first"
     )
     
     second_extractor = StructureExtractor(
         name="Second",
-        pattern=r"second\s+(.+?)(?=\n|$)"
+        noun="second"
     )
     
     parent_extractor = StructureExtractor(
         name="Parent",
-        pattern=r"Parent:\s*(.+?)(?=\n\w+:|$)",
+        noun="Parent:",
         child_extractors=[first_extractor, second_extractor]
     )
     

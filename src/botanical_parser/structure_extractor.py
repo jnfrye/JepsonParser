@@ -21,7 +21,7 @@ class StructureExtractor:
     then extracting attributes from the remaining text.
     """
     
-    def __init__(self, name: str, pattern: Optional[str] = None, 
+    def __init__(self, name: str, noun: Optional[str] = None, pattern: Optional[str] = None, 
                  attribute_extractors: Optional[List[AttributeExtractor]] = None,
                  child_extractors: Optional[List['StructureExtractor']] = None):
         """
@@ -29,13 +29,21 @@ class StructureExtractor:
         
         Args:
             name: The name of the structure to extract.
-            pattern: Regular expression pattern to match the structure.
-                     Should include a capturing group for the content.
+            noun: The noun that starts a region in the text, used to generate the pattern.
+            pattern: Regular expression pattern to match the structure's text region.
+                     Must include a capturing group for the content.
+                     Leave as None to use the noun to generate the pattern;
+                     leave both as None to create a root-level extractor.
             attribute_extractors: List of attribute extractors for this structure.
             child_extractors: List of child structure extractors.
         """
         self.name = name
-        self.pattern = re.compile(pattern, re.IGNORECASE | re.DOTALL) if pattern else None
+        if noun:
+            self.pattern = re.compile(rf"{noun}\s+(.+?)(?=;|$)", re.IGNORECASE | re.DOTALL)
+        elif pattern:
+            self.pattern = re.compile(pattern, re.IGNORECASE | re.DOTALL)
+        else:
+            self.pattern = None
         self.attribute_extractors = attribute_extractors or []
         self.child_extractors = child_extractors or []
     
