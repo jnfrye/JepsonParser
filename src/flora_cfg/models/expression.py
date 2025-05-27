@@ -2,7 +2,7 @@
 Expression models for representing parsed botanical expressions.
 """
 from abc import ABC, abstractmethod
-from typing import List, Dict, Union, Optional, Any
+from typing import List, Dict, Optional, Any
 
 class BotanicalExpression(ABC):
     """Abstract base class for all botanical expressions."""

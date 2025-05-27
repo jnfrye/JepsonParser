@@ -1,8 +1,8 @@
 """
 Grammar definitions for basic botanical values.
 """
-from typing import List, Dict, Optional
-from .core import GrammarBuilder, CFG
+from typing import List, Optional
+from src.flora_cfg.grammar.core import GrammarBuilder, CFG
 
 # Common botanical terms for our initial grammar
 GROWTH_FORMS = ["herb", "shrub", "tree", "vine", "subshrub", "annual", "perennial"]
