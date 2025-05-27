@@ -26,64 +26,7 @@ UNITS = ["mm", "cm", "m", "dm"]
 
 CONJUNCTIONS = ["and", "or", "to", "--"]
 
-def build_value_grammar() -> CFG:
-    """
-    Build a grammar for parsing botanical values.
-    
-    Returns:
-        A context-free grammar for botanical values
-    """
-    builder = GrammarBuilder(start_symbol="VALUE")
-    
-    # Simple terms
-    builder.add_values("GROWTH_FORM", GROWTH_FORMS)
-    builder.add_values("SURFACE", SURFACE_TERMS)
-    builder.add_values("UNIT", UNITS)
-    builder.add_values("ADJ_QUALIFIER", ADJACENT_QUALIFIERS)
-    builder.add_values("COLL_QUALIFIER", COLLECTIVE_QUALIFIERS)
-    builder.add_values("CONJUNCTION", CONJUNCTIONS)
-    
-    # Value expressions
-    builder.add_rule("VALUE", ["SIMPLE_VALUE"])
-    builder.add_rule("VALUE", ["QUALIFIED_VALUE"])
-    builder.add_rule("VALUE", ["CONJUNCTION_VALUE"])
-    builder.add_rule("VALUE", ["UNIT_VALUE"])
-    builder.add_rule("VALUE", ["QUALIFIED_CONJUNCTION"])
-
-    # Simple values
-    builder.add_rule("SIMPLE_VALUE", ["GROWTH_FORM"])
-    builder.add_rule("SIMPLE_VALUE", ["SURFACE"])
-    builder.add_rule("SIMPLE_VALUE", ["NUMBER"])
-    
-    # Numbers
-    for i in range(1, 100):
-        builder.add_terminal_rule("NUMBER", str(i))
-    
-    # Qualified values
-    builder.add_rule("QUALIFIED_VALUE", ["ADJ_QUALIFIER", "SIMPLE_VALUE"])
-    builder.add_rule("QUALIFIED_VALUE", ["COLL_QUALIFIER", "SIMPLE_VALUE"])
-    builder.add_rule("QUALIFIED_VALUE", ["COLL_QUALIFIER", "QUALIFIED_VALUE"])
-    
-    # Unit expressions
-    builder.add_rule("UNIT_VALUE", ["NUMBER", "UNIT"])
-    builder.add_rule("UNIT_VALUE", ["QUALIFIED_NUMBER", "UNIT"])
-    builder.add_rule("QUALIFIED_NUMBER", ["ADJ_QUALIFIER", "NUMBER"])
-    
-    # Conjunction expressions
-    builder.add_rule("CONJUNCTION_VALUE", ["SIMPLE_VALUE", "CONJUNCTION", "SIMPLE_VALUE"])
-    builder.add_rule("CONJUNCTION_VALUE", ["QUALIFIED_VALUE", "CONJUNCTION", "QUALIFIED_VALUE"])
-    builder.add_rule("CONJUNCTION_VALUE", ["SIMPLE_VALUE", "CONJUNCTION", "QUALIFIED_VALUE"])
-    builder.add_rule("CONJUNCTION_VALUE", ["QUALIFIED_VALUE", "CONJUNCTION", "SIMPLE_VALUE"])
-    
-    # Qualified conjunctions (with collective qualifiers)
-    builder.add_rule("QUALIFIED_CONJUNCTION", ["COLL_QUALIFIER", "CONJUNCTION_VALUE"])
-    
-    # Unit application to conjunctions (e.g., "5 or 10 mm")
-    builder.add_rule("UNIT_VALUE", ["CONJUNCTION_VALUE", "UNIT"])
-    
-    return builder.build()
-
-def build_value_grammar_with_scope(
+def build_value_grammar(
     growth_forms: Optional[List[str]] = None,
     surface_terms: Optional[List[str]] = None,
     adjacent_qualifiers: Optional[List[str]] = None,
@@ -92,15 +35,19 @@ def build_value_grammar_with_scope(
     conjunctions: Optional[List[str]] = None
 ) -> CFG:
     """
-    Build a grammar for parsing botanical values with custom vocabulary.
+    Build a grammar for parsing botanical values.
+    
+    This function creates a context-free grammar for parsing botanical values. It can use the
+    default vocabulary defined at the module level, or custom vocabulary can be provided
+    through the parameters.
     
     Args:
-        growth_forms: List of growth form terms
-        surface_terms: List of surface description terms
-        adjacent_qualifiers: List of adjacent qualifiers
-        collective_qualifiers: List of collective qualifiers
-        units: List of measurement units
-        conjunctions: List of conjunctions
+        growth_forms: Optional list of growth form terms. Uses default if None.
+        surface_terms: Optional list of surface description terms. Uses default if None.
+        adjacent_qualifiers: Optional list of adjacent qualifiers. Uses default if None.
+        collective_qualifiers: Optional list of collective qualifiers. Uses default if None.
+        units: Optional list of measurement units. Uses default if None.
+        conjunctions: Optional list of conjunctions. Uses default if None.
         
     Returns:
         A context-free grammar for botanical values
