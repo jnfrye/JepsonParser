@@ -103,6 +103,26 @@ class GrammarBuilder:
             self.add_terminal_rule(lhs, value)
         return self
     
+    def merge(self, other_builder: 'GrammarBuilder') -> 'GrammarBuilder':
+        """
+        Merge another grammar builder into this one.
+        
+        Args:
+            other_builder: Another GrammarBuilder to merge
+            
+        Returns:
+            Self, for method chaining
+        """
+        # Merge productions
+        self.productions.extend(other_builder.productions)
+        
+        # Merge nonterminals
+        for name, nt in other_builder.nonterminals.items():
+            if name not in self.nonterminals:
+                self.nonterminals[name] = nt
+        
+        return self
+    
     def build(self) -> CFG:
         """
         Build and return the context-free grammar.

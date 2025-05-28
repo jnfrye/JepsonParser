@@ -5,7 +5,7 @@ from typing import List
 from nltk.parse import RecursiveDescentParser
 from nltk.tokenize import word_tokenize
 
-from src.flora_cfg.grammar.values import build_value_grammar
+from src.flora_cfg.grammar.components import build_jepson_grammar
 from src.flora_cfg.models.expression import (
     BotanicalExpression, 
     ValueExpression, 
@@ -24,7 +24,7 @@ class BotanicalValueParser:
         Args:
             custom_grammar: Optional custom grammar to use
         """
-        self.grammar = custom_grammar or build_value_grammar()
+        self.grammar = custom_grammar or build_jepson_grammar()
         self.parser = RecursiveDescentParser(self.grammar)
     
     def tokenize(self, text: str) -> List[str]:
