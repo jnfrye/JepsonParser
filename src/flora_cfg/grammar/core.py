@@ -10,7 +10,7 @@ class GrammarBuilder:
     Provides a fluent interface for defining grammar rules.
     """
     
-    def __init__(self, start_symbol: str = "S"):
+    def __init__(self, start_symbol: Nonterminal):
         """
         Initialize a grammar builder with a start symbol.
         
@@ -18,24 +18,10 @@ class GrammarBuilder:
             start_symbol: The starting non-terminal symbol of the grammar
         """
         self.productions = []
-        self.nonterminals = {}
-        self.start_symbol = self._get_nonterminal(start_symbol)
-        
-    def _get_nonterminal(self, name: str) -> Nonterminal:
-        """
-        Get or create a non-terminal with the given name.
-        
-        Args:
-            name: The name of the non-terminal
-            
-        Returns:
-            A Nonterminal object
-        """
-        if name not in self.nonterminals:
-            self.nonterminals[name] = Nonterminal(name)
-        return self.nonterminals[name]
+        self.nonterminals = {start_symbol.symbol(): start_symbol}
+        self.start_symbol = start_symbol
     
-    def add_rule(self, lhs: str, rhs: List[Union[str, Nonterminal]]) -> 'GrammarBuilder':
+    def add_rule(self, lhs: Nonterminal, rhs: List[Union[str, Nonterminal]]) -> 'GrammarBuilder':
         """
         Add a production rule to the grammar.
         
@@ -46,21 +32,26 @@ class GrammarBuilder:
         Returns:
             Self for method chaining
         """
-        lhs_nt = self._get_nonterminal(lhs)
+        # Register the nonterminal if it's not already known
+        if lhs.symbol() not in self.nonterminals:
+            self.nonterminals[lhs.symbol()] = lhs
+            
         rhs_items = []
         
         for item in rhs:
-            if isinstance(item, str) and item.isupper() and not item.startswith('"') and not item.endswith('"'):
-                # Treat uppercase strings as non-terminals unless quoted
-                rhs_items.append(self._get_nonterminal(item))
+            if isinstance(item, Nonterminal):
+                # Register the nonterminal if it's not already known
+                if item.symbol() not in self.nonterminals:
+                    self.nonterminals[item.symbol()] = item
+                rhs_items.append(item)
             else:
                 # Treat other items as terminals
                 rhs_items.append(item)
         
-        self.productions.append(Production(lhs_nt, rhs_items))
+        self.productions.append(Production(lhs, rhs_items))
         return self
     
-    def add_terminal_rule(self, lhs: str, terminal: str) -> 'GrammarBuilder':
+    def add_terminal_rule(self, lhs: Nonterminal, terminal: str) -> 'GrammarBuilder':
         """
         Add a rule that produces a terminal symbol.
         
@@ -73,7 +64,7 @@ class GrammarBuilder:
         """
         return self.add_rule(lhs, [terminal])
     
-    def add_alternative_rules(self, lhs: str, alternatives: List[List[Union[str, Nonterminal]]]) -> 'GrammarBuilder':
+    def add_alternative_rules(self, lhs: Nonterminal, alternatives: List[List[Union[str, Nonterminal]]]) -> 'GrammarBuilder':
         """
         Add multiple alternative production rules for the same LHS.
         
@@ -88,7 +79,7 @@ class GrammarBuilder:
             self.add_rule(lhs, alt)
         return self
     
-    def add_values(self, lhs: str, values: List[str]) -> 'GrammarBuilder':
+    def add_values(self, lhs: Nonterminal, values: List[str]) -> 'GrammarBuilder':
         """
         Add rules for a list of terminal values.
         

@@ -134,28 +134,26 @@ class TestBotanicalValueParser:
     def test_complex_expressions(self, parser):
         """Test parsing of more complex expressions."""
         result = parser.parse("generally glabrous to sparsely hairy")
+    
+        # The expression should be a QualifierExpression with "generally" as the qualifier
+        # for the entire "glabrous to sparsely hairy" expression
+        assert isinstance(result, QualifierExpression)
+        assert result.qualifier == "generally"
+        assert result.qualifier_type == "collective"
         
-        # The expression should be a conjunction with "to" as the conjunction
-        # and "glabrous" and "sparsely hairy" as the expressions
-        assert isinstance(result, ConjunctionExpression)
-        assert result.conjunction == "to"
+        # The inner expression should be a ConjunctionExpression with "to" as the conjunction
+        inner = result.expression
+        assert isinstance(inner, ConjunctionExpression)
+        assert inner.conjunction == "to"
         
         # Check left side (glabrous)
-        left = result.expressions[0]
-        if isinstance(left, QualifierExpression):
-            left = left.expression
+        left = inner.expressions[0]
         assert isinstance(left, ValueExpression)
         assert left.value == "glabrous"
         
         # Check right side (sparsely hairy)
-        right = result.expressions[1]
-        if isinstance(right, QualifierExpression):
-            right = right.expression
-        assert isinstance(right, ValueExpression)
-        assert right.value == "hairy"
-        
-        # Check qualifiers - these should be applied to the expressions
-        if isinstance(result.expressions[0], QualifierExpression):
-            assert result.expressions[0].qualifier == "generally"
-        if isinstance(result.expressions[1], QualifierExpression):
-            assert result.expressions[1].qualifier == "sparsely"
+        right = inner.expressions[1]
+        assert isinstance(right, QualifierExpression)
+        assert right.qualifier == "sparsely"
+        assert isinstance(right.expression, ValueExpression)
+        assert right.expression.value == "hairy"
