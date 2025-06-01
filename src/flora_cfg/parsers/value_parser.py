@@ -69,25 +69,23 @@ class BotanicalValueParser:
             
         Returns:
             A BotanicalExpression object
-            
-        Raises:
-            ValueError: If the text cannot be parsed
         """
         # Tokenize the text
         tokens = self.tokenize(text)
         
         # Try to parse using the CFG
-        trees = list(self.parser.parse(tokens))
+        try:
+            trees = list(self.parser.parse(tokens))
+            
+            if not trees:
+                raise ValueError(f"No parse trees found for: '{text}' with tokens {tokens}")
+            
+            # Convert the parse tree to a BotanicalExpression
+            return self._convert_tree_to_expression(trees[0])
         
-        if not trees:
-            # If the CFG parsing fails, fall back to a simple value
-            if is_number(text):
-                return ValueExpression(float(text), value_type="number")
-            else:
-                return ValueExpression(text, value_type="word")
-        
-        # Convert the parse tree to a BotanicalExpression
-        return self._convert_tree_to_expression(trees[0])
+        except Exception as e:
+            # If error occurs during parsing, fall back to a simple value
+            return ValueExpression(text, value_type="parse failure")
     
     def _convert_tree_to_expression(self, tree) -> BotanicalExpression:
         """
