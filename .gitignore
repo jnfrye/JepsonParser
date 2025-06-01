@@ -17,9 +17,3 @@
 venv/
 __pycache__/
 **/__pycache__/
-
-# Ignore results directory
-results/
-
-# Ignore data directory
-data/
